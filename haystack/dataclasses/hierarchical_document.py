@@ -19,10 +19,10 @@ class HierarchicalDocument(Document):
 
     def __init__(self, document: Document):
         super().__init__()
-        self.parent_id: Optional[str] = None
-        self.children_ids: List[str] = []
-        self.level: int = 0
-        self.block_size: int = 0
+        document.meta["block_size"] = 0
+        document.meta["parent_id"]: Optional[str] = None
+        document.meta["children_ids"]: List[str] = []
+        document.meta["level"] = 0
         self._copy_from_document(document)
 
     def __repr__(self):
