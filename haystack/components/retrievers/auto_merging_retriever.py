@@ -2,7 +2,6 @@ from collections import defaultdict
 from typing import List
 
 from haystack import Document, component
-from haystack.dataclasses.hierarchical_document import HierarchicalDocument
 from haystack.document_stores.types import DocumentStore
 
 
@@ -41,7 +40,7 @@ class AutoMergingRetriever:
         self.threshold = threshold
 
     @component.output_types(documents=List[Document])
-    def run(self, matched_leaf_documents: List[HierarchicalDocument]):
+    def run(self, matched_leaf_documents: List[Document]):
         """
         Run the AutoMergingRetriever.
 
