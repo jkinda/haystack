@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List
+from typing import Dict, List
 
 from haystack import Document, component
 from haystack.document_stores.types import DocumentStore
@@ -20,7 +20,7 @@ class AutoMergingRetriever:
     chunks alone.
     """
 
-    def __init__(self, document_store: DocumentStore, threshold: float = 0.9):
+    def __init__(self, document_store: DocumentStore, threshold: float = 0.5):
         """
         Initialize the AutoMergingRetriever.
 
@@ -29,8 +29,7 @@ class AutoMergingRetriever:
         matched leaf documents.
 
         :param document_store: DocumentStore from which to retrieve the parent documents
-        :param threshold: Threshold to decide whether to return the parent document instead of the individual leaf
-                          documents
+        :param threshold: Threshold to decide whether the parent instead of the individual documents is returned
         """
 
         if threshold > 1 or threshold < 0:
@@ -50,17 +49,23 @@ class AutoMergingRetriever:
         docs_to_return = []
 
         # group the matched leaf documents by their parent documents
-        parent_documents = defaultdict(int)
+        parent_documents: Dict[str, List[Document]] = defaultdict(list)
         for doc in matched_leaf_documents:
-            parent_documents[doc.parent_id] = parent_documents.get(doc.parent_id, 0) + 1
+            parent_documents[doc.meta["parent_id"]].append(doc)
 
         # find total number of children for each parent document
-        for doc in parent_documents.keys():
-            parent_doc = self.document_store.filter_documents({"field": "id", "operator": "==", "value": doc.parent_id})
-            parent_children_count = parent_doc[0].children_count
+        for doc_id in parent_documents.keys():
+            parent_doc = self.document_store.filter_documents({"field": "id", "operator": "==", "value": doc_id})
+            parent_children_count = len(parent_doc[0].meta["children_ids"])
 
             # return either the parent document or the matched leaf documents based on the threshold value
-            if parent_children_count / len(matched_leaf_documents) >= self.threshold:
-                docs_to_return.append(parent_doc[0])
+            if len(parent_documents[doc_id]) / parent_children_count >= self.threshold:
+                print("Returning parent doc")
+                docs_to_return.append(parent_doc)
             else:
-                docs_to_return.append([doc for doc in matched_leaf_documents if doc.parent_id == doc])
+                # retrieve all the matched leaf documents for this parent
+                print("Returning leaf docs")
+                leafs_ids = [doc.id for doc in parent_documents[doc_id]]
+                docs_to_return.extend([doc for doc in matched_leaf_documents if doc.id in leafs_ids])
+
+        return docs_to_return
