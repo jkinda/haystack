@@ -85,7 +85,7 @@ class HierarchicalDocumentBuilder:
         Build a hierarchical tree document structure from a single document.
 
         Given a document, this function splits the document into hierarchical blocks of different sizes represented
-        as HierarchicalDocument objects
+        as HierarchicalDocument objects.
 
         :param document: Document to split into hierarchical blocks.
         :return:

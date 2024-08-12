@@ -53,20 +53,21 @@ class AutoMergingRetriever:
         for doc in matched_leaf_documents:
             parent_documents[doc.meta["parent_id"]].append(doc)
 
+        print(parent_documents)
+
         # find total number of children for each parent document
         for doc_id in parent_documents.keys():
             parent_doc = self.document_store.filter_documents({"field": "id", "operator": "==", "value": doc_id})
             parent_children_count = len(parent_doc[0].meta["children_ids"])
 
             # return either the parent document or the matched leaf documents based on the threshold value
+            print(parent_children_count, len(parent_documents[doc_id]), self.threshold)
             if len(parent_documents[doc_id]) / parent_children_count >= self.threshold:
                 # return the parent document
-                print("Returning parent doc")
-                docs_to_return.append(parent_doc)
+                docs_to_return.append(parent_doc[0])
             else:
                 # retrieve all the matched leaf documents for this parent
-                print("Returning leaf docs")
                 leafs_ids = [doc.id for doc in parent_documents[doc_id]]
                 docs_to_return.extend([doc for doc in matched_leaf_documents if doc.id in leafs_ids])
 
-        return docs_to_return
+        return {"documents": docs_to_return}
