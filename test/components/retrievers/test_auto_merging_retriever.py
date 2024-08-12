@@ -19,7 +19,7 @@ class TestSentenceWindowRetriever:
         with pytest.raises(ValueError):
             AutoMergingRetriever(InMemoryDocumentStore(), threshold=-2)
 
-    def test_run(self):
+    def test_run_return_parent_document(self):
         docs = [Document(content="The monarch of the wild blue yonder rises from the eastern side of the horizon.")]
         builder = HierarchicalDocumentBuilder(block_sizes=[10, 5, 2], split_overlap=0, split_by="word")
         docs = builder.run(docs)
@@ -32,3 +32,17 @@ class TestSentenceWindowRetriever:
         leaf_docs = [doc for doc in docs["documents"] if not doc.meta["children_ids"]]
         retriever = AutoMergingRetriever(doc_store_parents, threshold=0.5)
         retriever.run(leaf_docs[3:5])
+
+    def test_run_return_leafs_document(self):
+        docs = [Document(content="The monarch of the wild blue yonder rises from the eastern side of the horizon.")]
+        builder = HierarchicalDocumentBuilder(block_sizes=[10, 5, 2], split_overlap=0, split_by="word")
+        docs = builder.run(docs)
+
+        doc_store_parents = InMemoryDocumentStore()
+        for doc in docs["documents"]:
+            if doc.meta["children_ids"]:
+                doc_store_parents.write_documents([doc])
+
+        leaf_docs = [doc for doc in docs["documents"] if not doc.meta["children_ids"]]
+        retriever = AutoMergingRetriever(doc_store_parents, threshold=0.5)
+        retriever.run(leaf_docs[3:4])

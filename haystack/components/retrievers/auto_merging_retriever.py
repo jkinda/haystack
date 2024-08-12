@@ -60,6 +60,7 @@ class AutoMergingRetriever:
 
             # return either the parent document or the matched leaf documents based on the threshold value
             if len(parent_documents[doc_id]) / parent_children_count >= self.threshold:
+                # return the parent document
                 print("Returning parent doc")
                 docs_to_return.append(parent_doc)
             else:
